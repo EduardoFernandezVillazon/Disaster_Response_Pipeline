@@ -13,6 +13,7 @@ from sklearn.feature_extraction.text import TfidfTransformer, CountVectorizer
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV
 from pickle import dump
@@ -80,7 +81,16 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    pass
+
+    Y_pred = model.predict(X_test)
+    confusion_mat = confusion_matrix(Y_test, Y_pred, labels=category_names)
+    accuracy = (Y_pred == Y_test).mean()
+
+    print("Labels:", category_names)
+    print("Confusion Matrix:\n", confusion_mat)
+    print("Accuracy:", accuracy)
+    print("\nBest Parameters:", model.best_params_)
+    print(classification_report(Y_test, Y_pred, labels=category_names))
 
 
 def save_model(model, model_filepath):
