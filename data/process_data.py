@@ -35,8 +35,8 @@ def clean_data_categories(df_categories):
     return temporary_df
 
 
-def save_data(df, database_filepath):
-    engine = create_engine(database_filepath)
+def save_data(df, database_filename):
+    engine = create_engine('sqlite:///' + database_filename)
     df.to_sql('messages', engine, index=False)
 
 
