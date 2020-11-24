@@ -1,20 +1,21 @@
 import json
 import plotly
-import pandas as pd
-
+from pandas import DataFrame, Series
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
-
+from pandas import read_sql_table
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
-from sklearn.externals import joblib
+import joblib
 from sqlalchemy import create_engine
 
 
 app = Flask(__name__)
 
 def tokenize(text):
+    """Function used to tokenize"""
+
     tokens = word_tokenize(text)
     lemmatizer = WordNetLemmatizer()
 
@@ -25,12 +26,21 @@ def tokenize(text):
 
     return clean_tokens
 
+
+def get_common_topics(df, number_of_topics):
+    """This function returns"""
+    df_to_sort = df.drop(columns=['message', 'original', 'id', 'genre'])
+    df_to_sort = df_to_sort.astype('float').aggregate('mean', axis=0)
+    df_to_sort = df_to_sort.to_frame().reset_index().rename(columns={'index': 'Topic', 0: 'Mean'}).sort_values(
+        by='Mean', ascending=False)
+    return df_to_sort.head(number_of_topics).Mean, df_to_sort.head(number_of_topics).Topic
+
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('../data/DisasterResponse.db')
+df = read_sql_table('messages', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+model = joblib.load("../models/classifier.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
@@ -42,7 +52,9 @@ def index():
     # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
-    
+
+    topic_names, topic_frequencies = get_common_topics(df, 10)
+
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
     graphs = [
@@ -61,6 +73,24 @@ def index():
                 },
                 'xaxis': {
                     'title': "Genre"
+                }
+            }
+        },
+        {
+            'data': [
+                Bar(
+                    x=topic_names,
+                    y=topic_frequencies
+                )
+            ],
+
+            'layout': {
+                'title': 'Frequencies of the Most Common Topics',
+                'yaxis': {
+                    'title': "Relative Frequency"
+                },
+                'xaxis': {
+                    'title': "Topic"
                 }
             }
         }
