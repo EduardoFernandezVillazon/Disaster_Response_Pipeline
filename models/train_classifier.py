@@ -1,6 +1,5 @@
 import sys
 
-from pandas.compat import numpy
 from sqlalchemy import create_engine
 from pandas import read_sql_table
 from pandas import DataFrame
@@ -22,6 +21,7 @@ download('wordnet')
 download('punkt')
 download('stopwords')
 download('averaged_perceptron_tagger')
+
 
 def load_data(database_filepath):
     engine = create_engine(database_filepath)
