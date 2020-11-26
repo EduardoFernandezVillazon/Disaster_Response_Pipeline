@@ -9,6 +9,8 @@ from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
 import joblib
 from sqlalchemy import create_engine
+from sqlite3 import connect
+from pandas import read_sql_query
 
 
 app = Flask(__name__)
@@ -36,8 +38,8 @@ def get_common_topics(df, number_of_topics):
     return df_to_sort.head(number_of_topics).Mean, df_to_sort.head(number_of_topics).Topic
 
 # load data
-engine = create_engine('../data/DisasterResponse.db')
-df = read_sql_table('messages', engine)
+connection = connect('../data/DisasterResponse.db')
+df = read_sql_query('SELECT * FROM messages', connection)
 
 # load model
 model = joblib.load("../models/classifier.pkl")
@@ -53,7 +55,7 @@ def index():
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
 
-    topic_names, topic_frequencies = get_common_topics(df, 10)
+    topic_frequencies, topic_names = get_common_topics(df, 10)
 
     # create visuals
     # TODO: Below is an example - modify to create your own visuals

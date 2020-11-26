@@ -1,7 +1,8 @@
 import sys
 
 from sqlalchemy import create_engine
-from pandas import read_sql_table
+from sqlite3 import connect
+from pandas import read_sql_query
 from pandas import DataFrame
 from nltk import word_tokenize, pos_tag
 from nltk.corpus import stopwords
@@ -24,11 +25,11 @@ download('averaged_perceptron_tagger')
 
 
 def load_data(database_filepath):
-    engine = create_engine(database_filepath)
-    df = read_sql_table('messages', engine)
+    connection = connect(database_filepath)
+    df = read_sql_query('SELECT * FROM messages', connection)
     Y = df.drop(columns=['message', 'original', 'id'])
     X = df['message']
-    return X, Y
+    return X, Y, Y.columns
 
 
 def tokenize(text):
@@ -47,34 +48,35 @@ def build_model():
     ])
 
     parameters = {
-        'vectorize__analyzer': 'word',
-        'vectorize__binary': False,
-        'vectorize__decode_error': 'strict',
-        # 'vectorize__dtype': numpy.int64,
-        'vectorize__encoding': 'utf-8',
-        'vectorize__input': 'content',
-        'vectorize__lowercase': True,
-        'vectorize__max_df': 1.0,
-        'vectorize__max_features': None,
-        'vectorize__min_df': 1,
-        'vectorize__ngram_range': (1, 1),
-        'vectorize__preprocessor': None,
-        'vectorize__stop_words': None,
-        'vectorize__strip_accents': None,
-        'vectorize__token_pattern': '(?u)\\b\\w\\w+\\b',
-        # 'vectorize__tokenizer': tokenize(),
-        'vectorize__vocabulary': None,
-        'tfidf__norm': 'l2',
-        'tfidf__smooth_idf': True,
-        'tfidf__sublinear_tf': False,
-        'tfidf__use_idf': True,
-        'classifier__estimator__algorithm': ('auto', 'kd_tree'),
-        'classifier__estimator__leaf_size': (20, 25, 30, 35, 40),
-        'classifier__estimator__n_jobs': (1, 2),
-        'classifier__estimator__n_neighbors': (3, 4, 5, 6),
-        'classifier__estimator__p': (1, 2, 3),
-        'classifier__estimator__weights': ('uniform', 'distance'),
-        'classifier__n_jobs': (1, 2)}
+        # 'vectorize__analyzer': 'word',
+        # 'vectorize__binary': False,
+        # 'vectorize__decode_error': 'strict',
+        # # 'vectorize__dtype': numpy.int64,
+        # 'vectorize__encoding': 'utf-8',
+        # 'vectorize__input': 'content',
+        # 'vectorize__lowercase': True,
+        # 'vectorize__max_df': 1.0,
+        # 'vectorize__max_features': None,
+        # 'vectorize__min_df': 1,
+        # 'vectorize__ngram_range': (1, 1),
+        # 'vectorize__preprocessor': None,
+        # 'vectorize__stop_words': None,
+        # 'vectorize__strip_accents': None,
+        # 'vectorize__token_pattern': '(?u)\\b\\w\\w+\\b',
+        # # 'vectorize__tokenizer': tokenize(),
+        # 'vectorize__vocabulary': None,
+        # 'tfidf__norm': 'l2',
+        # 'tfidf__smooth_idf': True,
+        # 'tfidf__sublinear_tf': False,
+        # 'tfidf__use_idf': True,
+        # 'classifier__estimator__algorithm': ('auto', 'kd_tree'),
+        # 'classifier__estimator__leaf_size': (20, 25,),
+        # 'classifier__estimator__n_jobs': (1),
+        'classifier__estimator__n_neighbors': (3, 4),
+        # 'classifier__estimator__p': (1, 2),
+        # 'classifier__estimator__weights': ('uniform', 'distance'),
+        # 'classifier__n_jobs': (1)
+    }
 
     cv = GridSearchCV(pipeline, param_grid=parameters)
     return cv
@@ -83,14 +85,14 @@ def build_model():
 def evaluate_model(model, X_test, Y_test, category_names):
 
     Y_pred = model.predict(X_test)
-    confusion_mat = confusion_matrix(Y_test, Y_pred, labels=category_names)
+    # confusion_mat = confusion_matrix(Y_test, Y_pred, labels=category_names)
     accuracy = (Y_pred == Y_test).mean()
 
     print("Labels:", category_names)
-    print("Confusion Matrix:\n", confusion_mat)
+    # print("Confusion Matrix:\n", confusion_mat)
     print("Accuracy:", accuracy)
     print("\nBest Parameters:", model.best_params_)
-    print(classification_report(Y_test, Y_pred, labels=category_names))
+    # print(classification_report(Y_test, Y_pred, labels=category_names))
 
 
 def save_model(model, model_filepath):
