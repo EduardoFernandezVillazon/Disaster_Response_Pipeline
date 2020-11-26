@@ -4,22 +4,23 @@ from sqlalchemy import create_engine
 
 
 def load_data(messages_filepath, categories_filepath):
+    """This function loads the data from the messages and categories csv files to produce the raw dataframes"""
     messages = read_csv(messages_filepath)
     categories = read_csv(categories_filepath)
     return messages, categories
 
 
 def categories_return_values(row):
-    """cleaning function to be applied to the categories column"""
+    """This function is used to extract the values from the raw categories dataframe"""
     values = []
     for column in row:
         column_name, value = column.split('-')
-        values.append(value)
+        values.append(bool(int(value)))
     return values
 
 
 def categories_get_column_names(row):
-    """gets column names from the original dataset"""
+    """This function extracts column names from the raw categories dataframe"""
     column_names = []
     for column in row:
         column_name, value = column.split('-')
@@ -28,6 +29,7 @@ def categories_get_column_names(row):
 
 
 def clean_data_categories(df_categories):
+    """This function cleans the categories dataframe"""
     column_names = categories_get_column_names(df_categories['categories'][0].split(';'))
     temporary_df = df_categories['categories'].str.split(';', expand=True).apply(categories_return_values)
     temporary_df.columns = column_names
@@ -36,6 +38,7 @@ def clean_data_categories(df_categories):
 
 
 def save_data(df, database_filename):
+    """This function saves the final dataframe to a certain SQL database"""
     engine = create_engine('sqlite:///' + database_filename)
     df.to_sql('messages', engine, index=False)
 
