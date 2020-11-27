@@ -13,6 +13,7 @@ from pandas import read_sql_query
 
 app = Flask(__name__)
 
+
 def tokenize(text):
     """Function used to tokenize"""
 
@@ -27,13 +28,14 @@ def tokenize(text):
     return clean_tokens
 
 
-def get_common_topics(df, number_of_topics):
+def get_common_topics(dataframe, number_of_topics):
     """This function returns"""
-    df_to_sort = df.drop(columns=['message', 'original', 'id', 'genre'])
+    df_to_sort = dataframe.drop(columns=['message', 'original', 'id', 'genre'])
     df_to_sort = df_to_sort.astype('float').aggregate('mean', axis=0)
     df_to_sort = df_to_sort.to_frame().reset_index().rename(columns={'index': 'Topic', 0: 'Mean'}).sort_values(
         by='Mean', ascending=False)
     return df_to_sort.head(number_of_topics).Mean, df_to_sort.head(number_of_topics).Topic
+
 
 # load data
 connection = connect('../data/DisasterResponse.db')
