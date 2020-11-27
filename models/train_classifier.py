@@ -63,7 +63,7 @@ def build_model():
 
 def evaluate_model(model, X_test, Y_test, category_names):
     """This function evaluates the accuracy of the model"""
-    Y_pred= DataFrame(data=model.predict(X_test), columns=category_names)
+    Y_pred = DataFrame(data=model.predict(X_test), columns=category_names)
     for category in category_names:
         print(classification_report(Y_test[category], Y_pred[category]))
     print("\nBest Parameters:", model.best_params_)
@@ -99,9 +99,9 @@ def main():
         print('Trained model saved!')
 
     else:
-        print('Please provide the filepath of the disaster messages database '\
-              'as the first argument and the filepath of the pickle file to '\
-              'save the model to as the second argument. \n\nExample: python '\
+        print('Please provide the filepath of the disaster messages database '
+              'as the first argument and the filepath of the pickle file to '
+              'save the model to as the second argument. \n\nExample: python '
               'train_classifier.py ../data/DisasterResponse.db classifier.pkl')
 
 
