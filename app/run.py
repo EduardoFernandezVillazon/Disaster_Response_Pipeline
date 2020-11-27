@@ -3,12 +3,10 @@ import plotly
 from pandas import DataFrame, Series
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
-from pandas import read_sql_table
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
 import joblib
-from sqlalchemy import create_engine
 from sqlite3 import connect
 from pandas import read_sql_query
 
@@ -51,14 +49,12 @@ model = joblib.load("../models/classifier.pkl")
 def index():
     
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
 
     topic_frequencies, topic_names = get_common_topics(df, 10)
 
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
         {
             'data': [

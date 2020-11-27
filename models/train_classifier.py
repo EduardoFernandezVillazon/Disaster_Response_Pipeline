@@ -1,9 +1,6 @@
 import sys
-
-from sqlalchemy import create_engine
 from sqlite3 import connect
-from pandas import read_sql_query
-from pandas import DataFrame
+from pandas import read_sql_query, DataFrame, Series
 from nltk import word_tokenize, pos_tag
 from nltk.corpus import stopwords
 from nltk import download
@@ -13,7 +10,6 @@ from sklearn.feature_extraction.text import TfidfTransformer, CountVectorizer
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV
 from pickle import dump
@@ -25,14 +21,16 @@ download('averaged_perceptron_tagger')
 
 
 def load_data(database_filepath):
+    """This function loads the data from a SQL database to a dataframe"""
     connection = connect(database_filepath)
     df = read_sql_query('SELECT * FROM messages', connection)
-    Y = df.drop(columns=['message', 'original', 'id'])
+    Y = df.drop(columns=['message', 'original', 'id', 'genre'])
     X = df['message']
     return X, Y, Y.columns
 
 
 def tokenize(text):
+    """This function is used to tokenize the text input from the messages column in the dataframe"""
     tokens = word_tokenize(text.lower())
     tokens = [t for t in tokens if t not in stopwords.words('english')]
     lemmatizer = WordNetLemmatizer()
@@ -41,6 +39,7 @@ def tokenize(text):
 
 
 def build_model():
+    """This function builds the ML model"""
     pipeline = Pipeline([
         ('vectorize', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
@@ -48,27 +47,7 @@ def build_model():
     ])
 
     parameters = {
-        # 'vectorize__analyzer': 'word',
-        # 'vectorize__binary': False,
-        # 'vectorize__decode_error': 'strict',
-        # # 'vectorize__dtype': numpy.int64,
-        # 'vectorize__encoding': 'utf-8',
-        # 'vectorize__input': 'content',
-        # 'vectorize__lowercase': True,
-        # 'vectorize__max_df': 1.0,
-        # 'vectorize__max_features': None,
-        # 'vectorize__min_df': 1,
-        # 'vectorize__ngram_range': (1, 1),
-        # 'vectorize__preprocessor': None,
-        # 'vectorize__stop_words': None,
-        # 'vectorize__strip_accents': None,
-        # 'vectorize__token_pattern': '(?u)\\b\\w\\w+\\b',
-        # # 'vectorize__tokenizer': tokenize(),
-        # 'vectorize__vocabulary': None,
-        # 'tfidf__norm': 'l2',
-        # 'tfidf__smooth_idf': True,
-        # 'tfidf__sublinear_tf': False,
-        # 'tfidf__use_idf': True,
+        # UNCOMMENT ACCORDING TO NEEDS
         # 'classifier__estimator__algorithm': ('auto', 'kd_tree'),
         # 'classifier__estimator__leaf_size': (20, 25,),
         # 'classifier__estimator__n_jobs': (1),
@@ -83,19 +62,15 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-
-    Y_pred = model.predict(X_test)
-    # confusion_mat = confusion_matrix(Y_test, Y_pred, labels=category_names)
-    accuracy = (Y_pred == Y_test).mean()
-
-    print("Labels:", category_names)
-    # print("Confusion Matrix:\n", confusion_mat)
-    print("Accuracy:", accuracy)
+    """This function evaluates the accuracy of the model"""
+    Y_pred= DataFrame(data=model.predict(X_test), columns=category_names)
+    for category in category_names:
+        print(classification_report(Y_test[category], Y_pred[category]))
     print("\nBest Parameters:", model.best_params_)
-    # print(classification_report(Y_test, Y_pred, labels=category_names))
 
 
 def save_model(model, model_filepath):
+    """This function saves the trained ML model as a pickle file"""
     dump(model, open(model_filepath, 'wb'))
 
 
@@ -113,7 +88,10 @@ def main():
         model.fit(X_train, Y_train)
         
         print('Evaluating model...')
-        evaluate_model(model, X_test, Y_test, category_names)
+        try:
+            evaluate_model(model, X_test, Y_test, category_names)
+        except Exception as e:
+            print(e)
 
         print('Saving model...\n    MODEL: {}'.format(model_filepath))
         save_model(model, model_filepath)
